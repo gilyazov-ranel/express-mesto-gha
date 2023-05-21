@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 const mongoose = require('mongoose');
 
 const cardSchema = new mongoose.Schema({
@@ -19,12 +20,12 @@ const cardSchema = new mongoose.Schema({
   likes: {
     type: mongoose.Schema.Types.Array,
     required: true,
-    default: []
+    default: [],
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
-})
+    default: Date.now,
+  },
+});
 
 module.exports = mongoose.model('card', cardSchema);
