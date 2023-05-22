@@ -34,7 +34,7 @@ module.exports.deleteCard = (req, res) => {
     })
     .catch((err) => {
       if (~err.message.indexOf(isNotFound)) {
-        return res.status(400).send({ message: `${messageNotCard}` });
+        return res.status(404).send({ message: `${messageNotCard}` });
       }
       res.status(500).send({ message: `${err.message}` });
     });
