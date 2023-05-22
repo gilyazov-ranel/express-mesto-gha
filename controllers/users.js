@@ -10,7 +10,12 @@ const messageNotUser = 'Пользователь по указанному _id �
 module.exports.getUsers = (req, res) => {
   User.find({})
     .then((users) => res.send({ users }))
-    .catch((err) => res.status(500).send({ message: `${err.message}` }));
+    .catch((err) => {
+      if (~err.message.indexOf(isDataError)) {
+        return res.status(400).send({ message: `${messageDataError}` });
+      }
+      res.status(500).send({ message: `${err.message}` });
+    });
 };
 
 module.exports.getUserId = (req, res) => {
@@ -52,7 +57,7 @@ module.exports.updateUser = (req, res) => {
     })
     .catch((err) => {
       if (~err.message.indexOf(isDataError)) {
-        return res.status(400).send({ message: `${messageDataError}при обновлении профиля` });
+        return res.status(400).send({ message: `${messageDataError} при обновлении профиля` });
       } if (~err.message.indexOf(isNotFound)) {
         return res.status(404).send({ message: `${messageNotUser}` });
       }
