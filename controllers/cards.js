@@ -29,12 +29,12 @@ module.exports.createCard = (req, res) => {
 
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
-    // .orFail(new Error('NotValidId'))
+    .orFail(new Error('NotValidId'))
     .then((cards) => {
       res.send(cards);
     })
     .catch((err) => {
-      if (~err.message.indexOf(isDataError)) {
+      if (err.message === 'NotValidId') {
         return res.status(400).send({ message: `${messageNotCard}` });
       }
       res.status(500).send({ message: `${err.message}` });
@@ -70,9 +70,9 @@ module.exports.dislikeCard = (req, res) => {
     })
     .catch((err) => {
       if (~err.message.indexOf(isNotFound)) {
-        return res.status(404).send({ message: `${messageDataError}для снятии лайка` });
+        return res.status(400).send({ message: `${messageDataError}для снятии лайка` });
       } if (err.message === 'NotValidId') {
-        return res.status(400).send({ message: `${messageNotFound}` });
+        return res.status(404).send({ message: `${messageNotFound}` });
       }
       res.status(500).send({ message: `${err.message}` });
     });

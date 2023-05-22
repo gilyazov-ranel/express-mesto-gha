@@ -24,6 +24,7 @@ module.exports.getUserId = (req, res) => {
       res.send({ user });
     })
     .catch((err) => {
+      console.log(err.message);
       if (~err.message.indexOf(isNotFound)) {
         return res.status(400).send({ message: `${messageNotUser}` });
       }
@@ -34,10 +35,9 @@ module.exports.getUserId = (req, res) => {
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
-    .orFail(new Error('NotValidId'))
     .then((user) => res.send({ user }))
     .catch((err) => {
-      if (err.message === 'NotValidId') {
+      if (~err.message.indexOf(isDataError)) {
         return res.status(400).send({ message: `${messageDataError}при создании пользователя` });
       }
       res.status(500).send({ message: `${err.message}` });
@@ -53,14 +53,14 @@ module.exports.updateUser = (req, res) => {
       new: true,
       runValidators: true,
     },
-  ).orFail(new Error('NotValidId'))
+  )
     .then((user) => {
       res.send({ user });
     })
     .catch((err) => {
       if (~err.message.indexOf('Validation failed')) {
         return res.status(400).send({ message: `${messageDataError} при обновлении профиля` });
-      } if (err.message === 'NotValidId') {
+      } if (~err.message.indexOf(isNotFound)) {
         return res.status(404).send({ message: `${messageNotUser}` });
       }
       res.status(500).send({ message: `${err.message}` });
@@ -81,7 +81,7 @@ module.exports.updateAvatarUser = (req, res) => {
     .catch((err) => {
       if (~err.message.indexOf(isNotFound)) {
         return res.status(400).send({ message: `${messageDataError}при обновлении аватара` });
-      } if (err.message === 'NotValidId') {
+      } if (~err.message.indexOf(err.message === 'NotValidId')) {
         return res.status(404).send({ message: `${messageNotUser}` });
       }
       res.status(500).send({ message: `${err.message}` });
