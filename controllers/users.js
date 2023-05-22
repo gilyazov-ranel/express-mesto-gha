@@ -20,13 +20,16 @@ module.exports.getUsers = (req, res) => {
 
 module.exports.getUserId = (req, res) => {
   User.findById(req.params.userId)
+    .orFail(new Error('NotValidId'))
     .then((user) => {
       res.send({ user });
     })
     .catch((err) => {
-      console.log(err.message);
+      if (err.message === 'NotValidId') {
+        return res.status(404).send({ message: `${messageNotUser}` });
+      }
       if (~err.message.indexOf(isNotFound)) {
-        return res.status(400).send({ message: `${messageNotUser}` });
+        return res.status(400).send({ message: `${messageDataError}` });
       }
       res.status(500).send({ message: `${err.message}` });
     });

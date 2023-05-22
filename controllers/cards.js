@@ -34,8 +34,11 @@ module.exports.deleteCard = (req, res) => {
       res.send(cards);
     })
     .catch((err) => {
-      if (err.message === 'NotValidId') {
+      if (~err.message.indexOf(isNotFound)) {
         return res.status(400).send({ message: `${messageNotCard}` });
+      }
+      if (err.message === 'NotValidId') {
+        return res.status(404).send({ message: `${messageNotFound}` });
       }
       res.status(500).send({ message: `${err.message}` });
     });
