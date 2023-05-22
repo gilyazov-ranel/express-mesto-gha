@@ -50,6 +50,7 @@ module.exports.updateUser = (req, res) => {
     { name, about },
     {
       new: true,
+      runValidators: true,
     },
   )
     .then((user) => {
@@ -72,11 +73,12 @@ module.exports.updateAvatarUser = (req, res) => {
     { avatar },
     {
       new: true,
+      runValidators: true,
     },
   )
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (~err.message.indexOf('isDataError')) {
+      if (~err.message.indexOf(isDataError)) {
         return res.status(400).send({ message: `${messageDataError}при обновлении аватара` });
       } if (~err.message.indexOf(isNotFound)) {
         return res.status(404).send({ message: `${messageNotUser}` });

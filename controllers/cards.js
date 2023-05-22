@@ -34,7 +34,7 @@ module.exports.deleteCard = (req, res) => {
     })
     .catch((err) => {
       if (~err.message.indexOf(isNotFound)) {
-        return res.status(404).send({ message: `${messageNotCard}` });
+        return res.status(400).send({ message: `${messageNotCard}` });
       }
       res.status(500).send({ message: `${err.message}` });
     });
@@ -44,14 +44,17 @@ module.exports.putLike = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
-    { new: true },
+    {
+      new: true,
+      runValidators: true,
+    },
   ).then((cards) => {
     res.send(cards);
   })
     .catch((err) => {
       if (~err.message.indexOf(isDataError)) {
         return res.status(400).send({ message: `${messageDataError}для постановки лайка` });
-      } if (err.message.indexOf(isNotFound)) {
+      } if (~err.message.indexOf(isNotFound)) {
         return res.status(404).send({ message: `${messageNotFound}` });
       }
       res.status(500).send({ message: `${err.message}` });
@@ -62,7 +65,10 @@ module.exports.removeLike = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
-    { new: true },
+    {
+      new: true,
+      runValidators: true,
+    },
   ).then((cards) => {
     res.send(cards);
   })
