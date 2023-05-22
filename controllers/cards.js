@@ -34,7 +34,7 @@ module.exports.deleteCard = (req, res) => {
     })
     .catch((err) => {
       if (~err.message.indexOf(isNotFound)) {
-        return res.status(404).send({ message: `${messageNotCard}` });
+        return res.status(400).send({ message: `${messageNotCard}` });
       }
       res.status(500).send({ message: `${err.message}` });
     });
@@ -46,10 +46,10 @@ module.exports.putLike = (req, res) => {
     { $addToSet: { likes: req.user._id } },
     {
       new: true,
-      runValidators: true,
     },
   ).then((cards) => {
     res.send(cards);
+    console.log(cards);
   })
     .catch((err) => {
       if (~err.message.indexOf(isDataError)) {
@@ -67,12 +67,13 @@ module.exports.removeLike = (req, res) => {
     { $pull: { likes: req.user._id } },
     {
       new: true,
-      runValidators: true,
     },
   ).then((cards) => {
     res.send(cards);
+    console.log(cards);
   })
     .catch((err) => {
+      console.log(err.messege)
       if (~err.message.indexOf(isDataError)) {
         return res.status(400).send({ message: `${messageDataError}для снятии лайка` });
       } if (~err.message.indexOf(isNotFound)) {
