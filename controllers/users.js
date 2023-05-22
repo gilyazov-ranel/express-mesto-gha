@@ -35,9 +35,10 @@ module.exports.getUserId = (req, res) => {
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
+    .orFail(new Error('NotValidId'))
     .then((user) => res.send({ user }))
     .catch((err) => {
-      if (~err.message.indexOf(isDataError)) {
+      if (err.message === 'NotValidId') {
         return res.status(400).send({ message: `${messageDataError}при создании пользователя` });
       }
       res.status(500).send({ message: `${err.message}` });
