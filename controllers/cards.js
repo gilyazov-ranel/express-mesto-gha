@@ -29,54 +29,49 @@ module.exports.createCard = (req, res) => {
 
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
+    .orFail(new Error('NotValidId'))
     .then((cards) => {
       res.send(cards);
     })
     .catch((err) => {
-      if (~err.message.indexOf(isNotFound)) {
+      if (err.message === 'NotValidId') {
         return res.status(400).send({ message: `${messageNotCard}` });
       }
       res.status(500).send({ message: `${err.message}` });
     });
 };
 
-module.exports.putLike = (req, res) => {
+module.exports.likeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
-    {
-      new: true,
-    },
-  ).then((cards) => {
-    res.send(cards);
-    console.log(cards);
-  })
-    .catch((err) => {
-      if (~err.message.indexOf(isDataError)) {
+    { new: true },
+  ).orFail(new Error('NotValidId'))
+    .then((cards) => {
+      res.send({ data: cards });
+    }).catch((err) => {
+      if (~err.message.indexOf(isNotFound)) {
         return res.status(400).send({ message: `${messageDataError}для постановки лайка` });
-      } if (~err.message.indexOf(isNotFound)) {
+      } if (err.message === 'NotValidId') {
         return res.status(404).send({ message: `${messageNotFound}` });
       }
       res.status(500).send({ message: `${err.message}` });
     });
 };
 
-module.exports.removeLike = (req, res) => {
+module.exports.dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
-    {
-      new: true,
-    },
-  ).then((cards) => {
-    res.send(cards);
-    console.log(cards);
-  })
+    { new: true },
+  ).orFail(new Error('NotValidId'))
+    .then((cards) => {
+      res.send(cards);
+    })
     .catch((err) => {
-      console.log(err.messege)
-      if (~err.message.indexOf(isDataError)) {
+      if (~err.message.indexOf(isNotFound)) {
         return res.status(400).send({ message: `${messageDataError}для снятии лайка` });
-      } if (~err.message.indexOf(isNotFound)) {
+      } if (err.message === 'NotValidId') {
         return res.status(404).send({ message: `${messageNotFound}` });
       }
       res.status(500).send({ message: `${err.message}` });
