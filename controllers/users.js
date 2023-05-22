@@ -24,7 +24,6 @@ module.exports.getUserId = (req, res) => {
       res.send({ user });
     })
     .catch((err) => {
-      console.log(err.message);
       if (~err.message.indexOf(isNotFound)) {
         return res.status(400).send({ message: `${messageNotUser}` });
       }

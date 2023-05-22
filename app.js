@@ -26,7 +26,10 @@ app.use((req, res, next) => {
 
 app.use(routersCard);
 app.use(routers);
-app.use((req, res) => res.status(404).send({ message: 'Путь не найден' }));
+app.use((req, res, next) => {
+  next(res.status(404).send({ message: 'Путь не найден' }));
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
