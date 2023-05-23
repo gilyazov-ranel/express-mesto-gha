@@ -7,23 +7,28 @@ const isNotFound = 'Cast to ObjectId failed';
 const messageDataError = 'Переданы некорректные данные ';
 const messageNotCard = 'Карточка с указанным _id не найдена';
 const messageNotFound = 'Передан несуществующий _id карточки';
+const messageError = 'Внутренняя ошибка сервера';
+const badRequest = '400';
+const notFound = '404';
+const internslServerError = '500';
+const created = '201';
 
 module.exports.getCards = (req, res) => {
   Card.find({})
     .then((cards) => res.send({ cards }))
-    .catch((err) => res.status(500).send({ message: `${err.message}` }));
+    .catch((err) => res.status(internslServerError).send({ message: `${err.message}` }));
 };
 
 module.exports.createCard = (req, res) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
-    .then((cards) => res.send(cards))
+    .then((cards) => res.status(created).send(cards))
 
     .catch((err) => {
       if (~err.message.indexOf(isDataError)) {
-        return res.status(400).send({ message: `${messageDataError}при создании карточки` });
+        return res.status(badRequest).send({ message: `${messageDataError}при создании карточки` });
       }
-      res.status(500).send({ message: `${err.message}` });
+      res.status(internslServerError).send({ message: `${messageError}` });
     });
 };
 
@@ -35,12 +40,12 @@ module.exports.deleteCard = (req, res) => {
     })
     .catch((err) => {
       if (~err.message.indexOf(isNotFound)) {
-        return res.status(400).send({ message: `${messageNotCard}` });
+        return res.status(badRequest).send({ message: `${messageNotCard}` });
       }
       if (err.message === 'NotValidId') {
-        return res.status(404).send({ message: `${messageNotFound}` });
+        return res.status(notFound).send({ message: `${messageNotFound}` });
       }
-      res.status(500).send({ message: `${err.message}` });
+      res.status(internslServerError).send({ message: `${messageError}` });
     });
 };
 
@@ -54,11 +59,11 @@ module.exports.likeCard = (req, res) => {
       res.send({ data: cards });
     }).catch((err) => {
       if (~err.message.indexOf(isNotFound)) {
-        return res.status(400).send({ message: `${messageDataError}для постановки лайка` });
+        return res.status(badRequest).send({ message: `${messageDataError}для постановки лайка` });
       } if (err.message === 'NotValidId') {
-        return res.status(404).send({ message: `${messageNotFound}` });
+        return res.status(notFound).send({ message: `${messageNotFound}` });
       }
-      res.status(500).send({ message: `${err.message}` });
+      res.status(internslServerError).send({ message: `${messageError}` });
     });
 };
 
@@ -73,10 +78,10 @@ module.exports.dislikeCard = (req, res) => {
     })
     .catch((err) => {
       if (~err.message.indexOf(isNotFound)) {
-        return res.status(400).send({ message: `${messageDataError}для снятии лайка` });
+        return res.status(badRequest).send({ message: `${messageDataError}для снятии лайка` });
       } if (err.message === 'NotValidId') {
-        return res.status(404).send({ message: `${messageNotFound}` });
+        return res.status(notFound).send({ message: `${messageNotFound}` });
       }
-      res.status(500).send({ message: `${err.message}` });
+      res.status(internslServerError).send({ message: `${messageError}` });
     });
 };

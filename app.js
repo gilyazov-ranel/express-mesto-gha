@@ -1,7 +1,7 @@
 const express = require('express');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const mongoose = require('mongoose');
-const routers = require('./router/users');
+const routersUser = require('./router/users');
 const routersCard = require('./router/cards');
 
 const db = 'mongodb://127.0.0.1:27017/mestodb';
@@ -18,14 +18,14 @@ app.use(express.json());
 
 app.use((req, res, next) => {
   req.user = {
-    _id: '64667117e877963f164e0817',
+    _id: '646cfd4f3dd142a1802843f3',
   };
 
   next();
 });
 
-app.use(routersCard);
-app.use(routers);
+app.use('/cards', routersCard);
+app.use('/users', routersUser);
 app.use((req, res, next) => {
   next(res.status(404).send({ message: 'Путь не найден' }));
 });

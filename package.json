@@ -21,7 +21,6 @@
   "homepage": "https://github.com/gilyazov-ranel/express-mesto-gha#readme",
   "devDependencies": {
     "eslint": "^8.40.0",
-    "eslint-plugin-react": "^7.32.2",
     "nodemon": "^2.0.22"
   },
   "dependencies": {
