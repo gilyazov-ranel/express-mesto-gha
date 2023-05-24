@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const routersUser = require('./router/users');
 const routersCard = require('./router/cards');
 
+const notFound = '404';
+
 const db = 'mongodb://127.0.0.1:27017/mestodb';
 
 const { PORT = 3000 } = process.env;
@@ -27,7 +29,7 @@ app.use((req, res, next) => {
 app.use('/cards', routersCard);
 app.use('/users', routersUser);
 app.use((req, res, next) => {
-  next(res.status(404).send({ message: 'Путь не найден' }));
+  next(res.status(notFound).send({ message: 'Путь не найден' }));
 });
 
 app.listen(PORT, () => {
