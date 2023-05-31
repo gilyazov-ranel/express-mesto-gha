@@ -3,6 +3,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const routersUser = require('./router/users');
 const routersCard = require('./router/cards');
+const {
+  createUser, login,
+} = require('./controllers/users');
+const auth = require('./middlewares/auth');
 
 const notFound = '404';
 
@@ -18,16 +22,12 @@ mongoose.connect(db)
 
 app.use(express.json());
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '646cfd4f3dd142a1802843f3',
-  };
-
-  next();
-});
-
+app.post('/signup', createUser);
+app.post('/signin', login);
+app.use(auth);
 app.use('/cards', routersCard);
 app.use('/users', routersUser);
+
 app.use((req, res, next) => {
   next(res.status(notFound).send({ message: 'Путь не найден' }));
 });

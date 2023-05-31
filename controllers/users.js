@@ -1,5 +1,9 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable consistent-return */
 /* eslint-disable no-unused-vars */
+
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
 const messageDataError = 'Переданы некорректные данные ';
@@ -18,7 +22,27 @@ module.exports.getUsers = (req, res) => {
     });
 };
 
-module.exports.getUserId = (req, res) => {
+module.exports.getUserId = (req, res, next) => {
+  User.findById(req.params.userId)
+    .orFail(new Error('DocumentNotFoundError'))
+    .then((user) => {
+      res.send({ user });
+    })
+    .catch((err) => {
+      if (err.name === 'Error') {
+        return res.status(notFound).send({ message: `${messageNotUser}` });
+      }
+      if (err.name === 'CastError') {
+        return res.status(badRequest).send({ message: `${messageDataError}` });
+      }
+      res.status(internslServerError).send({ message: `${messageError}` });
+
+      next();
+    });
+};
+
+module.exports.getCurrentUser = (req, res) => {
+  console.log(req.user);
   User.findById(req.params.userId)
     .orFail(new Error('DocumentNotFoundError'))
     .then((user) => {
@@ -35,9 +59,29 @@ module.exports.getUserId = (req, res) => {
     });
 };
 
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
+      res.send({ token });
+    })
+    .catch((err) => {
+      res
+        .status(401)
+        .send({ message: 'Неправильные почта или пароль' });
+    });
+};
+
 module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
+  const {
+    email, password, name, about, avatar,
+  } = req.body;
+
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      email, password: hash, name, about, avatar,
+    }))
     .then((user) => res.status(created).send({ user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
