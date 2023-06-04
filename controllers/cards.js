@@ -1,6 +1,7 @@
 /* eslint-disable consistent-return */
 /* eslint-disable no-unused-vars */
-
+const { InternslServerError, Forbidden, NotFoundError } = require('../errors/collectionOfErrors');
+const { errorCenter } = require('../middlewares/errorCenter');
 const Card = require('../models/card');
 
 const messageDataError = 'Переданы некорректные данные ';
@@ -12,74 +13,55 @@ const notFound = 404;
 const internslServerError = 500;
 const created = 201;
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send({ cards }))
-    .catch((err) => res.status(internslServerError).send({ message: `${messageError}` }));
+    .catch((err) => errorCenter(err, req, res, next));
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
     .then((cards) => res.status(created).send(cards))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(badRequest).send({ message: `${messageDataError}при создании карточки` });
-      }
-      res.status(internslServerError).send({ message: `${messageError}` });
-    });
+    .catch((err) => errorCenter(err, req, res, next));
 };
 
-module.exports.deleteCard = (req, res) => {
+module.exports.deleteCard = (req, res, next) => {
   Card.findByIdAndRemove(req.params.cardId)
-    .orFail(new Error('DocumentNotFoundError'))
-    .then((cards) => {
-      res.send(cards);
+    .orFail(() => {
+      throw new NotFoundError('Карточка с указанным _id не найдена');
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return res.status(badRequest).send({ message: `${messageNotCard}` });
+    .then((cards) => {
+      if (req.user._id !== cards.owner.toString()) {
+        throw new Forbidden('Вы не можете удалить чужую карточку');
       }
-      if (err.name === 'Error') {
-        return res.status(notFound).send({ message: `${messageNotFound}` });
-      }
-      res.status(internslServerError).send({ message: `${messageError}` });
-    });
+      return res.send(cards);
+    })
+    .catch(next);
 };
 
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
-  ).orFail(new Error('DocumentNotFoundError'))
+  ).orFail(() => {
+    throw new NotFoundError('Передан несуществующий _id карточки');
+  })
     .then((cards) => {
       res.send({ data: cards });
-    }).catch((err) => {
-      if (err.name === 'CastError') {
-        return res.status(badRequest).send({ message: `${messageDataError}для постановки лайка` });
-      } if (err.name === 'Error') {
-        return res.status(notFound).send({ message: `${messageNotFound}` });
-      }
-      res.status(internslServerError).send({ message: `${messageError}` });
-    });
+    }).catch((err) => errorCenter(err, req, res, next));
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
-  ).orFail(new Error('DocumentNotFoundError'))
+  ).orFail(() => {
+    throw new NotFoundError('Передан несуществующий _id карточки');
+  })
     .then((cards) => {
-      res.send(cards);
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return res.status(badRequest).send({ message: `${messageDataError}для снятии лайка` });
-      } if (err.name === 'Error') {
-        return res.status(notFound).send({ message: `${messageNotFound}` });
-      }
-      res.status(internslServerError).send({ message: `${messageError}` });
-    });
+      res.send({ data: cards });
+    }).catch((err) => errorCenter(err, req, res, next));
 };

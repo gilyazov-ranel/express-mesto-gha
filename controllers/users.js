@@ -1,65 +1,56 @@
+/* eslint-disable no-return-assign */
+/* eslint-disable import/no-unresolved */
+/* eslint-disable import/extensions */
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable consistent-return */
 /* eslint-disable no-unused-vars */
 
 const bcrypt = require('bcryptjs');
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const {
+  InternslServerError, NotFoundError, Unauthorized,
+} = require('../errors/collectionOfErrors');
+const { errorCenter } = require('../middlewares/errorCenter');
 
 const messageDataError = 'Переданы некорректные данные ';
-const messageNotUser = 'Пользователь по указанному _id не найден';
 const messageError = 'Внутренняя ошибка сервера';
+const messageNotUser = 'sadasdasd';
 const badRequest = 400;
 const notFound = 404;
 const internslServerError = 500;
 const created = 201;
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ users }))
-    .catch((err) => {
-      res.status(internslServerError).send({ message: `${messageError}` });
-    });
+    .catch((err) => errorCenter(err, req, res, next));
 };
 
 module.exports.getUserId = (req, res, next) => {
   User.findById(req.params.userId)
-    .orFail(new Error('DocumentNotFoundError'))
+    .orFail(() => {
+      throw new NotFoundError('Пользователь с таким id - не найден');
+    })
     .then((user) => {
       res.send({ user });
     })
-    .catch((err) => {
-      if (err.name === 'Error') {
-        return res.status(notFound).send({ message: `${messageNotUser}` });
-      }
-      if (err.name === 'CastError') {
-        return res.status(badRequest).send({ message: `${messageDataError}` });
-      }
-      res.status(internslServerError).send({ message: `${messageError}` });
-
-      next();
-    });
+    .catch((err) => errorCenter(err, req, res, next));
 };
 
-module.exports.getCurrentUser = (req, res) => {
-  console.log(req.user);
-  User.findById(req.params.userId)
-    .orFail(new Error('DocumentNotFoundError'))
+module.exports.getCurrentUser = (req, res, next) => {
+  User.findById(req.user._id)
+    .orFail((() => {
+      throw new NotFoundError('Пользователь с таким id - не найден');
+    }))
     .then((user) => {
       res.send({ user });
     })
-    .catch((err) => {
-      if (err.name === 'Error') {
-        return res.status(notFound).send({ message: `${messageNotUser}` });
-      }
-      if (err.name === 'CastError') {
-        return res.status(badRequest).send({ message: `${messageDataError}` });
-      }
-      res.status(internslServerError).send({ message: `${messageError}` });
-    });
+    .catch((err) => errorCenter(err, req, res, next));
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
@@ -67,31 +58,33 @@ module.exports.login = (req, res) => {
       res.send({ token });
     })
     .catch((err) => {
-      res
-        .status(401)
-        .send({ message: 'Неправильные почта или пароль' });
+      next(new Unauthorized('Неправильные почта или пароль'));
     });
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const {
     email, password, name, about, avatar,
   } = req.body;
 
   bcrypt.hash(password, 10)
     .then((hash) => User.create({
-      email, password: hash, name, about, avatar,
+      email,
+      name,
+      about,
+      avatar,
+      password: hash,
     }))
-    .then((user) => res.status(created).send({ user }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(badRequest).send({ message: `${messageDataError}при создании пользователя` });
-      }
-      res.status(internslServerError).send({ message: `${messageError}` });
-    });
+    .then((user) => {
+      res.status(created).send({
+        _id: user._id,
+        email: user.email,
+      });
+    })
+    .catch((err) => errorCenter(err, req, res, next));
 };
 
-module.exports.updateUser = (req, res) => {
+module.exports.updateUser = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -100,21 +93,16 @@ module.exports.updateUser = (req, res) => {
       new: true,
       runValidators: true,
     },
-  ).orFail(new Error('ValidationError'))
+  ).orFail(() => {
+    throw new NotFoundError('Пользователь с таким id - не найден');
+  })
     .then((user) => {
       res.send({ user });
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(badRequest).send({ message: `${messageDataError} при обновлении профиля` });
-      } if (err.name === 'Error') {
-        return res.status(notFound).send({ message: `${messageNotUser}` });
-      }
-      res.status(internslServerError).send({ message: `${messageError}` });
-    });
+    .catch((err) => errorCenter(err, req, res, next));
 };
 
-module.exports.updateAvatarUser = (req, res) => {
+module.exports.updateAvatarUser = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -123,14 +111,9 @@ module.exports.updateAvatarUser = (req, res) => {
       new: true,
       runValidators: true,
     },
-  ).orFail(new Error('DocumentNotFoundError'))
+  ).orFail(() => {
+    throw new NotFoundError('Пользователь с таким id - не найден');
+  })
     .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(badRequest).send({ message: `${messageDataError}при обновлении аватара` });
-      } if (err.name === 'Error') {
-        return res.status(notFound).send({ message: `${messageNotUser}` });
-      }
-      res.status(internslServerError).send({ message: `${messageError}` });
-    });
+    .catch((err) => errorCenter(err, req, res, next));
 };
