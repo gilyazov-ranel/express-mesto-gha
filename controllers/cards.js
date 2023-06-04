@@ -4,13 +4,6 @@ const { InternslServerError, Forbidden, NotFoundError } = require('../errors/col
 const { errorCenter } = require('../middlewares/errorCenter');
 const Card = require('../models/card');
 
-const messageDataError = 'Переданы некорректные данные ';
-const messageNotCard = 'Карточка с указанным _id не найдена';
-const messageNotFound = 'Передан несуществующий _id карточки';
-const messageError = 'Внутренняя ошибка сервера';
-const badRequest = 400;
-const notFound = 404;
-const internslServerError = 500;
 const created = 201;
 
 module.exports.getCards = (req, res, next) => {
@@ -31,13 +24,13 @@ module.exports.deleteCard = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError('Карточка с указанным _id не найдена');
     })
-    .then((cards) => {
-      if (req.user._id !== cards.owner.toString()) {
+    .then((card) => {
+      if (req.user._id !== card.owner.toString()) {
         throw new Forbidden('Вы не можете удалить чужую карточку');
       }
-      return res.send(cards);
+      return res.send(card);
     })
-    .catch(next);
+    .catch((err) => errorCenter(err, req, res, next));
 };
 
 module.exports.likeCard = (req, res, next) => {

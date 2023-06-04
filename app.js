@@ -1,35 +1,16 @@
-/* eslint-disable no-useless-escape */
 /* eslint-disable no-unused-vars */
-/* eslint-disable import/no-extraneous-dependencies */
 const express = require('express');
-const { celebrate, Joi, errors } = require('celebrate');
+const { errors } = require('celebrate');
+
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const { validateUserJoi } = require('./utilit/validateUser');
 const routersUser = require('./router/users');
 const routersCard = require('./router/cards');
 const {
   createUser, login,
 } = require('./controllers/users');
 const auth = require('./middlewares/auth');
-
-const cardJoi = celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().required().min(2).max(30),
-    link: Joi.string().required(),
-  }),
-});
-
-const userJoi = celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
-    name: Joi.string().min(2).max(30),
-    about: Joi.string().min(2).max(30),
-    avatar: Joi.string().pattern(
-      /https*\:\/\/w{0,3}\.*[a-z0-9\-]*\.ru[a-z0-9\/]*/,
-    ),
-  }),
-});
 
 const notFound = '404';
 
@@ -46,14 +27,14 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.post('/signup', userJoi, createUser);
-app.post('/signin', userJoi, login);
+app.post('/signup', validateUserJoi, createUser);
+app.post('/signin', validateUserJoi, login);
 
 app.use(auth);
 
-app.use('/cards', cardJoi, routersCard);
+app.use('/cards', routersCard);
 
-app.use('/users', userJoi, routersUser);
+app.use('/users', routersUser);
 
 app.use((req, res, next) => {
   next(res.status(notFound).send({ message: 'Путь не найден' }));
