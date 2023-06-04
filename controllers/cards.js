@@ -1,6 +1,6 @@
 /* eslint-disable consistent-return */
 /* eslint-disable no-unused-vars */
-const { InternslServerError, Forbidden, NotFoundError } = require('../errors/collectionOfErrors');
+const { Forbidden, NotFoundError } = require('../errors/collectionOfErrors');
 const { errorCenter } = require('../middlewares/errorCenter');
 const Card = require('../models/card');
 

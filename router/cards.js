@@ -6,7 +6,7 @@ const { validateCardJoi, validationCardId } = require('../utilit/validateCard');
 
 router.get('/', getCards);
 router.post('/', validateCardJoi, createCard);
-router.delete('/:cardId', deleteCard);
+router.delete('/:cardId', validationCardId, deleteCard);
 router.put('/:cardId/likes', validationCardId, likeCard);
 router.delete('/:cardId/likes', validationCardId, dislikeCard);
 

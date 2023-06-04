@@ -1,4 +1,3 @@
-/* eslint-disable no-unreachable */
 /* eslint-disable consistent-return */
 const jwt = require('jsonwebtoken');
 

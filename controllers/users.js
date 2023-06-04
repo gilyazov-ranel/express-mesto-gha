@@ -1,8 +1,3 @@
-/* eslint-disable no-return-assign */
-/* eslint-disable import/no-unresolved */
-/* eslint-disable import/extensions */
-/* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable consistent-return */
 /* eslint-disable no-unused-vars */
 
 const bcrypt = require('bcryptjs');
@@ -58,7 +53,7 @@ module.exports.login = (req, res, next) => {
 
 module.exports.createUser = (req, res, next) => {
   const {
-    email, password, name, about, avatar,
+    email, name, about, avatar, password,
   } = req.body;
 
   bcrypt.hash(password, 10)
@@ -69,6 +64,7 @@ module.exports.createUser = (req, res, next) => {
       avatar,
       password: hash,
     }))
+    .then((user) => User.findOne({ _id: user._id }))
     .then((user) => {
       res.status(created).send(user);
     })
