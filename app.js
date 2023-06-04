@@ -1,8 +1,9 @@
+/* eslint-disable no-useless-escape */
 /* eslint-disable no-unused-vars */
 /* eslint-disable import/no-extraneous-dependencies */
 const express = require('express');
 const { celebrate, Joi, errors } = require('celebrate');
-// eslint-disable-next-line import/no-extraneous-dependencies
+const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const routersUser = require('./router/users');
 const routersCard = require('./router/cards');
@@ -11,18 +12,24 @@ const {
 } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 
-const userJoi = {
-  name: Joi.string().required().min(2).max(30),
-  link: Joi.string().required(),
-};
+const cardJoi = celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().required().min(2).max(30),
+    link: Joi.string().required(),
+  }),
+});
 
-const cardJoi = {
-  email: Joi.string().required(),
-  password: Joi.string().required().min(8),
-  name: Joi.string().min(2).max(30),
-  about: Joi.string().min(2).max(30),
-  avatar: Joi.string(),
-};
+const userJoi = celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required().min(8),
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(30),
+    avatar: Joi.string().pattern(
+      /https*\:\/\/w{0,3}\.*[a-z0-9\-]*\.ru[a-z0-9\/]*/,
+    ),
+  }),
+});
 
 const notFound = '404';
 
@@ -35,24 +42,18 @@ mongoose.connect(db)
   .then((res) => console.log('База даннных подключена'))
   .catch(((error) => console.log(error)));
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.post('/signup', celebrate({
-  body: Joi.object().keys(userJoi),
-}), createUser);
-app.post('/signin', celebrate({
-  body: Joi.object().keys(userJoi),
-}), login);
+app.post('/signup', userJoi, createUser);
+app.post('/signin', userJoi, login);
 
 app.use(auth);
 
-app.use('/cards', celebrate({
-  body: Joi.object().keys(cardJoi),
-}), routersCard);
+app.use('/cards', cardJoi, routersCard);
 
-app.use('/users', celebrate({
-  body: Joi.object().keys(userJoi),
-}), routersUser);
+app.use('/users', userJoi, routersUser);
 
 app.use((req, res, next) => {
   next(res.status(notFound).send({ message: 'Путь не найден' }));

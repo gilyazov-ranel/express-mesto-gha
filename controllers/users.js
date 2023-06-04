@@ -10,16 +10,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const {
-  InternslServerError, NotFoundError, Unauthorized,
+  NotFoundError, Unauthorized,
 } = require('../errors/collectionOfErrors');
 const { errorCenter } = require('../middlewares/errorCenter');
 
-const messageDataError = 'Переданы некорректные данные ';
-const messageError = 'Внутренняя ошибка сервера';
-const messageNotUser = 'sadasdasd';
-const badRequest = 400;
-const notFound = 404;
-const internslServerError = 500;
 const created = 201;
 
 module.exports.getUsers = (req, res, next) => {
