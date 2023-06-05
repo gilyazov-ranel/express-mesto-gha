@@ -5,13 +5,14 @@ const { errors } = require('celebrate');
 
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const { validateUserJoi } = require('./utilit/validateUser');
+const { validateCreateUser, validateLoginUser } = require('./utilit/validateUser');
 const routersUser = require('./router/users');
 const routersCard = require('./router/cards');
 const {
   createUser, login,
 } = require('./controllers/users');
 const auth = require('./middlewares/auth');
+const { NotFoundError } = require('./errors/collectionOfErrors');
 
 const notFound = '404';
 
@@ -28,8 +29,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.post('/signup', validateUserJoi, createUser);
-app.post('/signin', validateUserJoi, login);
+app.post('/signup', validateCreateUser, createUser);
+app.post('/signin', validateLoginUser, login);
 
 app.use(auth);
 
@@ -38,7 +39,7 @@ app.use('/cards', routersCard);
 app.use('/users', routersUser);
 
 app.use((req, res, next) => {
-  next(res.status(notFound).send({ message: 'Путь не найден' }));
+  next(new NotFoundError('Путь не найден'));
 });
 
 app.listen(PORT, () => {

@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const {
-  NotFoundError, Unauthorized,
+  NotFoundError, Conflict,
 } = require('../errors/collectionOfErrors');
 const { errorCenter } = require('../middlewares/errorCenter');
 
@@ -30,9 +30,9 @@ module.exports.getUserId = (req, res, next) => {
 
 module.exports.getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
-    .orFail((() => {
+    .orFail(() => {
       throw new NotFoundError('Пользователь с таким id - не найден');
-    }))
+    })
     .then((user) => {
       res.send({ user });
     })
@@ -46,9 +46,7 @@ module.exports.login = (req, res, next) => {
       const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
       res.send({ token });
     })
-    .catch((err) => {
-      next(new Unauthorized('Неправильные почта или пароль'));
-    });
+    .catch(next);
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -68,7 +66,12 @@ module.exports.createUser = (req, res, next) => {
     .then((user) => {
       res.status(created).send(user);
     })
-    .catch((err) => errorCenter(err, req, res, next));
+    .catch((err) => {
+      if (err.code === 11000) {
+        next(new Conflict('Пользователь с таким email уже существует'));
+      }
+      next(err);
+    });
 };
 
 module.exports.updateUser = (req, res, next) => {

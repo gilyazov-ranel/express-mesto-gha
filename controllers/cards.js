@@ -1,3 +1,4 @@
+/* eslint-disable no-shadow */
 /* eslint-disable consistent-return */
 /* eslint-disable no-unused-vars */
 const { Forbidden, NotFoundError } = require('../errors/collectionOfErrors');
@@ -20,7 +21,7 @@ module.exports.createCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  Card.findById(req.params.cardId)
     .orFail(() => {
       throw new NotFoundError('Карточка с указанным _id не найдена');
     })
@@ -28,7 +29,8 @@ module.exports.deleteCard = (req, res, next) => {
       if (req.user._id !== card.owner.toString()) {
         throw new Forbidden('Вы не можете удалить чужую карточку');
       }
-      return res.send(card);
+      Card.findByIdAndRemove(card._id.toString())
+        .then((card) => res.send(card)).catch(next);
     })
     .catch((err) => errorCenter(err, req, res, next));
 };
